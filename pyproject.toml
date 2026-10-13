@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lurecheck"
+version = "0.1.0"
+description = "Reads a saved email and explains how likely it is to be phishing"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []  # standard library only, on purpose: nothing to install, nothing to trust
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+include = ["lurecheck*"]

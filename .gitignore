@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+
+# Secrets and local config
+.env
+.env.*
+
+# Never commit real email. A real message carries personal data (yours and other
+# people's) and, if it is phishing, live malicious links and attachments.
+# The only .eml files in this repository are the made-up ones under tests/fixtures/.
+*.eml
+*.msg
+*.mbox
+*.pst
+samples/
+phishing-samples/
+!tests/fixtures/*.eml
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+.claude/launch.json
