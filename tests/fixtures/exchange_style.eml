@@ -1,0 +1,27 @@
+Received: from AB1PR01MB0001.prod.outlook.example (2001:db8::1) by
+ CD2PR02MB0002.prod.outlook.example with HTTPS; Wed, 14 Oct 2026 05:10:11 +0000
+Authentication-Results: spf=pass (sender IP is 192.0.2.40)
+ smtp.mailfrom=fabrikam-parts.example; dkim=pass (signature was verified)
+ header.d=fabrikam-parts.example;dmarc=pass action=none
+ header.from=fabrikam-parts.example;compauth=pass reason=100
+Received-SPF: Pass (protection.outlook.example: domain of fabrikam-parts.example
+ designates 192.0.2.40 as permitted sender)
+From: Priya Nair <priya.nair@fabrikam-parts.example>
+To: "Alex Rivera" <alex@harbor-mail.example>
+Subject: =?utf-8?B?UXVvdGUgZm9yIG9yZGVyIDg4MTIg4oCTIHJldmlzZWQ=?=
+Date: Wed, 14 Oct 2026 05:10:02 +0000
+Message-ID: <AB1PR01MB00010001@AB1PR01MB0001.prod.outlook.example>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="b1_quote"
+
+--b1_quote
+Content-Type: text/plain; charset="utf-8"
+
+Hi Alex, the revised quote for order 8812 is attached.
+
+--b1_quote
+Content-Type: text/html; charset="utf-8"
+
+<html><body><p>Hi Alex, the revised quote for order 8812 is attached.</p></body></html>
+
+--b1_quote--
