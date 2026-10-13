@@ -4,6 +4,25 @@ Important findings, mistakes and decisions, newest first. The things that were n
 
 ---
 
+## 2026-10-13: Where the links really go (stage 2)
+
+**Summary.** Lurecheck now reads every link in a message and works out where its address goes without visiting it. It reads the address the way a browser does, looks inside the wrappers that mail security products and search engines put around links, and reports the ways a link's text and address are made to differ.
+
+- **Python's HTML parser could not be used.** Measured before writing any code: 80 KB of unclosed tags took it 74 seconds, and doubling the size quadrupled the time. Another input made it raise an error outright. A message body can be megabytes and the sender chooses what is in it, so one email could have stalled the tool for hours. Lurecheck has its own scanner that only finds links, and reads the same megabyte in under a second. The trick that keeps it fast is refusing to look twice: when a tag has no end within reach, the whole stretch is skipped at once instead of being tried again from every `<` inside it.
+- **Browsers repair addresses, and the repairs are the attack.** `https://bank.example\@evil.example/` goes to the bank in a browser, because a backslash is read as a slash. Python's own address reader says it goes to `evil.example`. Neither is wrong by its own rules. Lurecheck reads it the browser's way, because the browser is what the victim uses, and reports the backslash as a finding in its own right.
+- **Square brackets are not left to Python.** Brackets in an address are only for a numeric IPv6 address, but this machine's Python reads `http://[evil.example]/` as a link to `evil.example`, and newer versions are stricter. The tests run on two versions, so Lurecheck decides for itself: brackets hold a numeric IPv6 address, or the link is unreadable.
+- **A rewritten link is judged by where it ends up.** Mail security services replace every link with one of their own. Comparing a link's text with that would flag every link in every message. Comparing with the destination inside the rewrite flags only the dishonest ones. The same reading-through exposes a link that bounces off a search engine's redirect to borrow its reputation.
+- **Not every address inside an address is a redirect.** A sharing button carries the page's address too. For a service it does not recognise, Lurecheck reports that the link carries a second address and does not claim to know where the click ends up.
+- **"invoice.zip" is not a website.** Link text that looks like `word.ending` is only treated as a site when the ending is a common one that is not also an everyday file type. Without that, a link labelled with a file name would be reported as naming a site it does not go to.
+- **The guard test caught its first stray character.** An invisible character was written literally into a new test file, the same mistake as in stage 1, and the test that scans the source failed straight away.
+- **One finding per trick.** A message with forty copies of a bad link is not forty times as suspicious. Each kind of trick is reported once, with up to three examples.
+
+**What the deliberate bugs found.** Eighty-four planted. Twelve survived the first run. Nine of those were missing tests, now written: a `>` inside a comment, a link inside a `<!` declaration, an apostrophe in a tag being taken for the start of a quoted value, a site with a security service's name buried inside its own, and five smaller ones. The other three change nothing that can be observed: each is a second line of defence behind a check that already holds, such as removing line breaks from an address that this version of Python removes anyway. The run now refuses to start unless every test passes first, after stage 1's meaningless perfect score.
+
+**Not done.** Honest click tracking and a deceptive link look the same to the text-against-address check, so it is scored medium and waits for measurement. Only ordinary links are read: not forms, images or scripts. Shortened links cannot be resolved offline. A lookalike domain is still just a domain.
+
+---
+
 ## 2026-10-13: Reading an email, and who sent it (stage 1)
 
 **Summary.** Lurecheck reads a `.eml` file, checks the sender-authentication results and the sender's name and addresses, and prints a scored report with the evidence for each finding. Standard library only. Three things went wrong on the way, and each one would have let a real trick through.
