@@ -1,0 +1,24 @@
+Delivered-To: alex@harbor-mail.example
+Received: by mx.harbor-mail.example with SMTP id a1b2c3 for <alex@harbor-mail.example>;
+        Mon, 12 Oct 2026 09:14:07 +0000
+Return-Path: <bounce-4471@bounces.northwind-bank.example>
+Authentication-Results: mx.harbor-mail.example;
+       dkim=pass header.i=@northwind-bank.example header.s=news2026 header.b=Q2hlY2s;
+       spf=pass (mx.harbor-mail.example: domain of bounce-4471@bounces.northwind-bank.example designates 192.0.2.25 as permitted sender) smtp.mailfrom=bounce-4471@bounces.northwind-bank.example;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=northwind-bank.example
+Received: from out25.northwind-bank.example (out25.northwind-bank.example [192.0.2.25])
+        by mx.harbor-mail.example with ESMTPS; Mon, 12 Oct 2026 09:14:06 +0000
+From: Northwind Bank <news@northwind-bank.example>
+To: Alex Rivera <alex@harbor-mail.example>
+Subject: Your October statement is ready
+Date: Mon, 12 Oct 2026 09:14:02 +0000
+Message-ID: <20261012091402.4471@northwind-bank.example>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+
+Hello Alex,
+
+Your October statement is now available in online banking.
+We will never ask for your password by email.
+
+Northwind Bank

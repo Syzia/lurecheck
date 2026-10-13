@@ -1,0 +1,23 @@
+Delivered-To: alex@harbor-mail.example
+Received: by mx.harbor-mail.example with SMTP id j1k2l3 for <alex@harbor-mail.example>;
+        Wed, 14 Oct 2026 11:47:30 +0000
+Return-Path: <noreply@parcel-tracking-update.example>
+Authentication-Results: mx.harbor-mail.example;
+       spf=softfail smtp.mailfrom=noreply@parcel-tracking-update.example;
+       dkim=none;
+       dmarc=fail (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=northwind-bank.example
+Received: from host17.parcel-tracking-update.example (host17.parcel-tracking-update.example [203.0.113.17])
+        by mx.harbor-mail.example with ESMTP; Wed, 14 Oct 2026 11:47:29 +0000
+Authentication-Results: mx.harbor-mail.example;
+       dkim=pass header.i=@northwind-bank.example;
+       spf=pass smtp.mailfrom=alerts@northwind-bank.example;
+       dmarc=pass header.from=northwind-bank.example
+From: Northwind Bank Alerts <alerts@northwind-bank.example>
+To: alex@harbor-mail.example
+Subject: Your card has been locked
+Date: Wed, 14 Oct 2026 11:47:25 +0000
+Message-ID: <lock-771@host17.parcel-tracking-update.example>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+
+Your card has been locked. Sign in to unlock it.

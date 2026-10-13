@@ -1,0 +1,19 @@
+Delivered-To: alex@harbor-mail.example
+Received: by mx.harbor-mail.example with SMTP id g7h8i9 for <alex@harbor-mail.example>;
+        Tue, 13 Oct 2026 03:02:44 +0000
+Return-Path: <billing@invoice-portal.example>
+Authentication-Results: mx.harbor-mail.example;
+       dkim=pass header.i=@invoice-portal.example header.s=default header.b=Rm9vYmFy;
+       spf=pass smtp.mailfrom=billing@invoice-portal.example;
+       dmarc=pass (p=NONE sp=NONE dis=NONE) header.from=invoice-portal.example
+Received: from mail.invoice-portal.example (mail.invoice-portal.example [198.51.100.61])
+        by mx.harbor-mail.example with ESMTPS; Tue, 13 Oct 2026 03:02:43 +0000
+From: "accounts@northwind-bank.example" <billing@invoice-portal.example>
+To: alex@harbor-mail.example
+Subject: Invoice 20391 is overdue
+Date: Tue, 13 Oct 2026 03:02:40 +0000
+Message-ID: <20391@invoice-portal.example>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+
+Your invoice 20391 is overdue. Open the attached statement to avoid a late fee.
