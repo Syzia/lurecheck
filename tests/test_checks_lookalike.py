@@ -155,6 +155,13 @@ class NameClaimsBrandTests(unittest.TestCase):
         self.assertEqual(finding.points, 25)
         self.assertEqual(finding.evidence, '"Microsoft" <x@account-alerts.example>   (Microsoft uses microsoft.com, microsoftonline.com, office.com)')
 
+    def test_the_brands_own_name_under_another_ending_is_not_also_a_claim(self):
+        # Found by measurement: the bank's genuine mail from a second domain it owns was scored twice.
+        checks = [f.check for f in lookalike.check(build(sender="Northwind Bank <news@northwind-bank.test>"), BANK)]
+        self.assertEqual(checks, ["lookalike.different-ending"])
+        self.assertEqual(self.claims("PayPal <service@paypal.co>"), 0)
+        self.assertEqual(self.claims("PayPal <service@paypal-billing.example>"), 1)  # a different name altogether
+
     def test_a_name_claiming_two_brands_is_one_finding(self):
         self.assertEqual(self.claims("PayPal and Microsoft billing <x@other.example>"), 1)
 
