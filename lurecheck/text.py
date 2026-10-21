@@ -10,6 +10,8 @@ import unicodedata
 from email.errors import HeaderParseError
 from email.header import decode_header, make_header
 
+from lurecheck.domains import domain_of, related  # noqa: F401  (kept here for existing imports)
+
 _FOLD = re.compile(r"\r?\n(?=[ \t])")
 _BREAK = re.compile(r"\r\n|\r|\n")  # a line break that was not a fold: it has no business in a header
 
@@ -22,16 +24,6 @@ _HIDDEN = frozenset(
 )
 _JOINER = "\u200d"  # zero-width joiner: hidden, except where it glues an emoji sequence together
 _EMOJI_NEIGHBOURS = ("So", "Sk", "Mn", "Me")
-
-# Two-label endings that are public suffixes: anyone can register a name under them, so two
-# domains sharing one are not the same organisation. A stopgap until stage 3 brings a fuller list.
-_SHARED_SUFFIXES = frozenset(
-    "co.uk org.uk ac.uk gov.uk me.uk ltd.uk com.au net.au org.au edu.au gov.au co.nz org.nz "
-    "co.jp ne.jp or.jp co.kr co.in net.in org.in com.br com.mx com.ar com.cn com.hk com.sg "
-    "com.tr com.tw co.za co.il co.th com.my com.ph com.pk com.ua com.vn github.io gitlab.io "
-    "herokuapp.com netlify.app vercel.app web.app pages.dev blogspot.com wordpress.com "
-    "azurewebsites.net cloudfront.net amazonaws.com".split()
-)
 
 
 def unfold(value: str) -> str:
@@ -78,26 +70,3 @@ def visible(text: str, limit: int = 200) -> str:
     if len(text) > limit:
         out.append(f"… (+{len(text) - limit} more)")
     return "".join(out)
-
-
-def domain_of(address: str) -> str:
-    """The domain of an address, or of a bare domain: lower-cased, with no trailing dot."""
-    return address.rsplit("@", 1)[-1].strip().strip(".").lower()
-
-
-def related(first: str, second: str) -> bool:
-    """Do two domains belong to the same organisation, as far as can be told offline?
-
-    True when they are the same, or one is a subdomain of the other, unless the
-    shorter one is a suffix anyone can register under (``co.uk``, ``github.io``).
-    This is an approximation of DMARC's "relaxed alignment".
-    """
-    first, second = domain_of(first), domain_of(second)
-    if not first or not second:
-        return False
-    if first == second:
-        return True
-    shorter, longer = sorted((first, second), key=len)
-    if "." not in shorter or shorter in _SHARED_SUFFIXES:
-        return False
-    return longer.endswith("." + shorter)

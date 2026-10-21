@@ -8,9 +8,11 @@ from typing import List, Optional
 
 from lurecheck.analysis import analyze
 from lurecheck.checks import Options
+from lurecheck.domains import registrable
 from lurecheck.message import MessageError, load_email
 from lurecheck.report import render_text, to_dict
 from lurecheck.text import visible
+from lurecheck.urls import host_kind
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -27,8 +29,19 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="the name your own mail server writes in Authentication-Results, such as mx.google.com. "
         "Results from any other server are then ignored. Default: use the topmost results",
     )
+    parser.add_argument(
+        "--protect",
+        action="append",
+        default=[],
+        metavar="DOMAIN",
+        help="a domain to watch for imitations of, besides the built-in brands, such as your own "
+        "organisation's. Repeat for several",
+    )
     args = parser.parse_args(argv)
-    options = Options(trusted_server=args.trusted_server)
+    for domain in args.protect:
+        if not registrable(domain) or host_kind(registrable(domain)) != "name":
+            parser.error(f"--protect needs a domain name such as northwind-bank.example, not {domain!r}")
+    options = Options(trusted_server=args.trusted_server, protected=tuple(args.protect))
 
     reports, failed = [], 0
     for path in args.files:

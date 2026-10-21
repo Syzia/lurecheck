@@ -76,9 +76,9 @@ class DeceptiveSenderTests(unittest.TestCase):
         self.assertIn("1 invisible character(s)", finding.title)
 
     def test_a_domain_in_another_alphabet(self):
-        self.assertEqual(found(sender_header="Bank <news@xn--nrthwind-bank-0ob.example>"), [("sender.international-domain", 10)])
-        self.assertEqual(found(sender_header="Bank <news@mail.xn--80ak6aa92e.example>"), [("sender.international-domain", 10)])
-        self.assertEqual(found(sender_header="Bank <news@nоrthwind-bank.example>"), [("sender.international-domain", 10)])  # Cyrillic o
+        self.assertEqual(found(sender_header="Bank <news@xn--nrthwind-bank-0ob.example>"), [("sender.international-domain", 0)])
+        self.assertEqual(found(sender_header="Bank <news@mail.xn--80ak6aa92e.example>"), [("sender.international-domain", 0)])
+        self.assertEqual(found(sender_header="Bank <news@n\u043erthwind-bank.example>"), [("sender.international-domain", 0)])  # Cyrillic o
 
     def test_replies_going_to_another_organisation(self):
         self.assertEqual(found(("Reply-To", "verification-team@northwind-secure-login.example")), [("sender.reply-goes-elsewhere", 25)])

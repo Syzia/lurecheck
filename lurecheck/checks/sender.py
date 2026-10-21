@@ -15,7 +15,7 @@ from lurecheck.findings import Finding
 from lurecheck.message import Email
 from lurecheck.text import decode_words, domain_of, hidden_characters, related
 
-_ADDRESS_IN_TEXT = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+")
+ADDRESS_IN_TEXT = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+")
 
 
 def _show(address: Address) -> str:
@@ -82,7 +82,7 @@ def check(message: Email, options: Options) -> List[Finding]:
         return findings
     sender = addresses[0]
 
-    for found in _ADDRESS_IN_TEXT.findall(sender.display):
+    for found in ADDRESS_IN_TEXT.findall(sender.display):
         if sender.domain and not related(domain_of(found), sender.domain):
             findings.append(
                 Finding(
@@ -119,13 +119,13 @@ def check(message: Email, options: Options) -> List[Finding]:
         findings.append(
             Finding(
                 check="sender.international-domain",
-                severity="low",
-                points=10,
+                severity="info",
+                points=0,
                 title="The sender's domain uses non-English letters",
                 evidence=sender.address,
                 explanation=(
-                    "Perfectly normal for many organisations, and also how lookalike domains are made: a letter "
-                    "from another alphabet that looks identical to an English one."
+                    "Perfectly normal for many organisations. Whether it imitates a well-known name is the lookalike "
+                    "check's job, which compares how it looks, not which alphabet it uses."
                 ),
             )
         )

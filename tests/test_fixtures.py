@@ -30,6 +30,18 @@ EXPECTED = {
     "link_tricks.eml": (
         "likely phishing", 70, ["link.name-before-at", "link.ip-address", "link.shortened"], ["auth.dmarc-pass", "link.sites"],
     ),
+    # Stage 3: lookalike domains, here of a built-in brand.
+    "lookalike_microsoft.eml": (
+        "likely phishing", 85, ["lookalike.characters", "lookalike.name-claims-brand", "lookalike.brand-plus-words"],
+        ["auth.dmarc-pass", "link.international-domain", "link.sites"],
+    ),
+}  # fmt: skip
+
+# The same messages when the reader's own bank, northwind-bank.example, is protected. Only the ones that
+# imitate it change. The legitimate ones, which really come from it, must not.
+PROTECTED = {
+    "deceptive_link.eml": (100, ["lookalike.brand-in-subdomain", "link.text-shows-another-site", "lookalike.name-claims-brand",
+                                 "lookalike.brand-plus-words"]),
 }  # fmt: skip
 
 
@@ -46,6 +58,16 @@ class FixtureTests(unittest.TestCase):
                 self.assertEqual([f.check for f in report.findings if not f.points], noted)
                 self.assertEqual(report.notes, ())
                 self.assertEqual(report.source, name)
+
+    def test_protecting_your_own_domain_changes_only_the_imitations(self):
+        options = Options(protected=("northwind-bank.example",))
+        for name, (verdict, score, scored, noted) in EXPECTED.items():
+            with self.subTest(email=name):
+                report = analyze(load_email(fixture(name)), options=options)
+                if name in PROTECTED:
+                    self.assertEqual((report.score, [f.check for f in report.findings if f.points]), PROTECTED[name])
+                else:
+                    self.assertEqual((report.verdict, report.score), (verdict, score))  # the genuine ones are left alone
 
     def test_the_summary_shows_decoded_headers(self):
         report = analyze(load_email(fixture("exchange_style.eml")))
@@ -81,7 +103,7 @@ class FixtureTests(unittest.TestCase):
         for name in EXPECTED:
             for finding in analyze(load_email(fixture(name))).findings:
                 with self.subTest(email=name, check=finding.check):
-                    self.assertRegex(finding.check, r"^(auth|sender|link)\.[a-z-]+$")
+                    self.assertRegex(finding.check, r"^(auth|sender|link|lookalike)\.[a-z-]+$")
                     self.assertTrue(finding.title and finding.evidence and finding.explanation)
                     self.assertGreater(len(finding.explanation), 60)  # a sentence, not a label
 

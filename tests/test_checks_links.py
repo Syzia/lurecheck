@@ -181,9 +181,9 @@ class DeceptiveLinkTests(unittest.TestCase):
         self.assertEqual(found(link("https://northwind-bank.example/out?next=https://help.northwind-bank.example/")), [])  # its own organisation
 
     def test_non_english_site_names(self):
-        self.assertEqual(found(link("https://xn--nrthwind-bank-0ob.example/")), [("link.international-domain", 10)])
-        self.assertEqual(found(link("https://nörthwind-bank.example/")), [("link.international-domain", 10)])
-        self.assertEqual(found(link("https://mail.xn--80ak6aa92e.example/")), [("link.international-domain", 10)])  # not the first label
+        self.assertEqual(found(link("https://xn--nrthwind-bank-0ob.example/")), [("link.international-domain", 0)])
+        self.assertEqual(found(link("https://nörthwind-bank.example/")), [("link.international-domain", 0)])
+        self.assertEqual(found(link("https://mail.xn--80ak6aa92e.example/")), [("link.international-domain", 0)])  # not the first label
 
     def test_one_finding_per_trick_however_many_links_use_it(self):
         message = page("".join(f'<a href="http://203.0.113.{n}/x">link {n}</a> ' for n in range(1, 9)))

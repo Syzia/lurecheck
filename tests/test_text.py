@@ -48,7 +48,7 @@ class VisibleTests(unittest.TestCase):
         self.assertEqual(visible("line\u2028sep"), "line\\u2028sep")
 
     def test_ordinary_text_in_any_language_is_left_alone(self):
-        for text in ("Northwind Bank <news@northwind-bank.example>", "Café Zürich", "日本語のメール", "Привет"):
+        for text in ("Northwind Bank <news@northwind-bank.example>", "Café Zürich", "日本語のメール", "\u041f\u0440\u0438\u0432\u0435\u0442"):
             self.assertEqual(visible(text), text)
 
     def test_long_text_is_cut_with_a_note(self):
