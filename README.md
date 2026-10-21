@@ -2,9 +2,24 @@
 
 Reads a saved email (a `.eml` file) and says how likely it is to be phishing, and why.
 
-> **Status: stage 3 of 6.** It reads an email safely, checks who really sent it, where its links really go, and whether any domain in it imitates a well-known one. It does not look at attachments yet. The risk score is provisional: the thresholds are first guesses and have not been measured against real mail.
+> **Status: stage 4 of 6 (MVP).** It reads an email safely, checks who really sent it, where its links really go, and whether any domain in it imitates a well-known one, and its results are measured on a labelled set of messages. It does not look at attachments yet, and it has not been measured on real email.
 
 Phishing is where most intrusions start, and deciding whether one reported email is real is everyday work for a security analyst. Lurecheck does the first pass: it reads the message the way an analyst would, lists what it found, and shows the evidence for each finding so a person can agree or disagree.
+
+## Results
+
+Measured on 950 labelled, made-up messages: 19 scenarios, 50 variations of each. Seven of the scenarios are there because Lurecheck is expected to get them **wrong**, and they are counted.
+
+| | Scenarios | Flagged every time | Flagged sometimes | Never flagged |
+|---|---:|---:|---:|---:|
+| Phishing | 11 | 7 | 0 | 4 |
+| Legitimate | 8 | 3 | 0 | 5 |
+
+- **Every scenario behaves as documented.** Each is caught every time or never; the details that vary between runs never change the outcome.
+- **The four phishing messages it misses** have no technical tell (a gift-card request from a free mail account, a phish from the attacker's own clean domain), hide behind a link shortener, or arrive as an attachment, which stage 5 will examine.
+- **The three legitimate messages it flags** look exactly like tricks: a newsletter's click tracking, a help desk's reply address, and a mailing list that breaks the author's signature. None of them reaches "likely phishing".
+
+The scenarios were written by the same person as the checks, so these numbers are a correctness check, not a claim about real mail. Every table, the threshold trade-offs and the known gaps are in [docs/results.md](docs/results.md), and a test regenerates it and fails if it drifts from the code.
 
 ## Try it
 
@@ -48,6 +63,7 @@ Options:
 - `--trusted-server NAME` names your own mail server (see "Which results to believe" below).
 - `--protect DOMAIN` adds a domain to watch for imitations of, usually your own organisation's. Repeat it for several.
 - Several files can be given at once.
+- `python3 -m lurecheck.evaluate` runs the measurement above. With `--folder DIR` it measures your own saved emails instead, from `DIR/phish/` and `DIR/benign/`, and prints only counts.
 
 **Your own email.** Save a message as `.eml` and pass its path. In Gmail: open the message, choose *Show original*, then *Download Original*. In Apple Mail: *File → Save As…* with the format *Raw Message Source*. Keep saved messages outside this folder, for example in `~/phishing-samples/`: they contain personal data, and `.gitignore` refuses them anyway.
 
@@ -142,7 +158,7 @@ The two "non-English letters" findings from stages 1 and 2 now add nothing to th
 
 ### The score
 
-Each scored finding adds its points, to a maximum of 100. From 20 the verdict is *suspicious*, from 50 *likely phishing*, below that *no strong signs of phishing*. Those numbers are judgement, not measurement. Stage 4 builds a labelled set of messages and reports what the tool catches, misses and wrongly flags, and the numbers will change then.
+Each scored finding adds its points, to a maximum of 100. From 20 the verdict is *suspicious*, from 50 *likely phishing*, below that *no strong signs of phishing*. Those lines were drawn before anything was measured and have not been moved: [docs/results.md](docs/results.md) shows what moving them would trade on the labelled set. At 50, nothing legitimate in it is flagged, and fewer than half of the phishing is.
 
 A low score means these checks found little. It never means a message is safe.
 
@@ -175,7 +191,7 @@ How Lurecheck protects itself:
 - **The lookalike table covers the usual suspects, not all of Unicode.** Cyrillic, Greek, Armenian and the common Latin variants. A letter from an uncommon alphabet that happens to look English can get through.
 - **A one-letter difference can be a real word.** That rule only applies to names of six letters or more, and is scored medium.
 - **No attachments or body text yet.**
-- **The scores are unmeasured.** See above.
+- **Measured only on simulated mail.** The labelled set was written by the same person as the checks. See [docs/results.md](docs/results.md).
 
 ## Build stages
 
@@ -186,7 +202,7 @@ Each stage is usable and tested on its own.
 | 1 | Read an email safely; sender and authentication checks; a scored report on the command line | done |
 | 2 | Links: extract them, unwrap known redirect wrappers offline, flag deceptive ones | done |
 | 3 | Lookalike domains | done |
-| 4 | A labelled test set and measured results: what it catches, misses and wrongly flags (**MVP**) | not started |
+| 4 | A labelled test set and measured results: what it catches, misses and wrongly flags (**MVP**) | done |
 | 5 | Attachments and HTML tricks | not started |
 | 6 | Optional live checks, such as DNS lookups, behind an explicit flag (stretch) | not started |
 

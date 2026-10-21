@@ -4,6 +4,22 @@ Important findings, mistakes and decisions, newest first. The things that were n
 
 ---
 
+## 2026-10-21: Measured results (stage 4, the MVP)
+
+**Summary.** A generator writes labelled, made-up emails from nineteen scenarios, and a measurement tool runs them through the real analysis and reports what is caught, missed and wrongly flagged. Seven scenarios are there because Lurecheck is expected to get them wrong. On 950 messages, every scenario behaves as documented.
+
+- **The first run found a real false alarm.** The bank's genuine mail from a second domain it owns scored 35 and was flagged. The same fact was being counted twice: once because the domain is the bank's name under a different ending, and again because the sender's name said "Northwind Bank" while the domain was not on the protected list. The brand-name check now stands aside when the domain *is* the brand's name; the ending is reported on its own, at 10.
+- **It also found a bug in the generator.** A lookalike Netflix link replaced an `l` with a Cyrillic `e`, which does not look like an `l`, so the "lookalike" was not one. A test now checks that every planted lookalike really reduces to the brand's name.
+- **Every scenario is all or nothing.** Fifty variations of each change names, wording and addresses, and never the outcome. So the headline percentages are really a count of scenarios, and the mix of scenarios was chosen. The results page says this before it shows a number, and puts the scenario table first.
+- **Moving the line trades one mistake for another.** Flagging from 30 instead of 20 removes two of the three false alarms, and stops catching a phishing link to a bare numeric address. From 50, nothing legitimate is flagged and fewer than half of the phishing is. The line stays at 20, because it was drawn before measuring and the simulated mix cannot say where it belongs for real mail.
+- **The tables are safe to share for real mail.** The same tool measures a folder of the user's own saved messages. It prints counts and finding ids, never an address or a subject, and a test checks that.
+
+**What the deliberate bugs found.** Thirty planted, twenty-eight caught on the first run. Both survivors were in the generator: nothing checked that the phishing attachment was actually attached, and no scenario used the common plain-text-plus-HTML shape, so that code was never run. The newsletter scenario now sends both parts, as real newsletters do, and a test checks the shape of each message.
+
+**Not done.** No real email has been measured. The scenarios were written by the person who wrote the checks, which makes these results a correctness check rather than evidence about real phishing.
+
+---
+
 ## 2026-10-21: Lookalike domains (stage 3)
 
 **Summary.** Lurecheck now compares every domain in a message (the sender's, the reply address's, and each link's destination) with a list of commonly imitated brands and with any domain the user protects, and reports five kinds of imitation. A domain in another alphabet is first reduced to what it looks like, so `p\u0430ypal.com` with a Cyrillic letter compares equal to `paypal.com`.

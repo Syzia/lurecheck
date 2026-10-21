@@ -212,6 +212,11 @@ def check(message: Email, options: Options) -> List[Finding]:
         for brand in brands:
             phrase = next((p for p in brand.phrases if re.search(r"(?<![a-z0-9])" + re.escape(p) + r"(?![a-z0-9])", named)), None)
             if phrase and not any(related(sender.domain, domain) for domain in brand.domains):
+                own_label = _split(unicode_form(registrable(sender.domain)))[0]
+                if any(own_label == _split(registrable(domain) or domain)[0] for domain in brand.domains):
+                    # The domain *is* the brand's name under another ending. Claiming that name adds
+                    # nothing; the ending is the question, and it is reported as an imitation of its own.
+                    break
                 findings.append(
                     Finding(
                         check="lookalike.name-claims-brand",
