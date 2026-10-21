@@ -22,6 +22,14 @@ EXPECTED = {
     "spoofed_bank.eml": (
         "likely phishing", 65, ["auth.dmarc-fail", "sender.reply-goes-elsewhere"], ["sender.sent-through-another-domain"],
     ),
+    # Stage 2: links.
+    "rewritten_links.eml": (
+        "no strong signs of phishing", 0, [], ["auth.dmarc-pass", "link.rewritten-by-security-service", "link.sites"],
+    ),
+    "deceptive_link.eml": ("suspicious", 25, ["link.text-shows-another-site"], ["auth.dmarc-pass", "link.sites"]),
+    "link_tricks.eml": (
+        "likely phishing", 70, ["link.name-before-at", "link.ip-address", "link.shortened"], ["auth.dmarc-pass", "link.sites"],
+    ),
 }  # fmt: skip
 
 
@@ -58,11 +66,22 @@ class FixtureTests(unittest.TestCase):
         pinned = analyze(load_email(fixture("forged_auth_header.eml")), options=Options(trusted_server=SERVER))
         self.assertEqual(pinned.score, with_forgery.score)
 
+    def test_links_are_judged_by_where_they_really_go(self):
+        # The legitimate newsletter's links all pass through a security service's rewrite, and the text
+        # of one shows the bank's address. Read through the rewrite, they match, and nothing is scored.
+        rewritten = analyze(load_email(fixture("rewritten_links.eml")))
+        sites = next(f for f in rewritten.findings if f.check == "link.sites")
+        self.assertEqual(sites.evidence, "northwind-bank.example, www.northwind-bank.example")
+        # The phish passes every authentication check, from a domain made to look like the bank's.
+        deceptive = analyze(load_email(fixture("deceptive_link.eml")))
+        self.assertEqual(deceptive.findings[0].evidence,
+                         '"https://northwind-bank.example/login" goes to northwind-bank.example.account-verify.example')
+
     def test_every_finding_explains_itself(self):
         for name in EXPECTED:
             for finding in analyze(load_email(fixture(name))).findings:
                 with self.subTest(email=name, check=finding.check):
-                    self.assertRegex(finding.check, r"^(auth|sender)\.[a-z-]+$")
+                    self.assertRegex(finding.check, r"^(auth|sender|link)\.[a-z-]+$")
                     self.assertTrue(finding.title and finding.evidence and finding.explanation)
                     self.assertGreater(len(finding.explanation), 60)  # a sentence, not a label
 
@@ -77,12 +96,23 @@ class FixtureHygieneTests(unittest.TestCase):
             with open(os.path.join(FIXTURES, name), encoding="utf-8") as handle:
                 yield name, handle.read()
 
+    # The only real names allowed are services Lurecheck itself recognises by name, which a
+    # made-up email has to mention to exercise that recognition. Nothing here is a real message.
+    KNOWN_SERVICES = ("nam01.safelinks.protection.outlook.com", "urldefense.proofpoint.com", "bit.ly")
+
     def test_every_domain_is_a_reserved_example_name(self):
         for name, text in self.texts():
             domains = set(re.findall(r"@([A-Za-z0-9.-]+)", text)) | set(re.findall(r"\b([a-z0-9-]+(?:\.[a-z0-9-]+)+\.[a-z]{2,})\b", text))
             for domain in domains:
+                try:
+                    ipaddress.ip_address(domain)
+                    continue  # a numeric address: the next test checks those
+                except ValueError:
+                    pass
                 with self.subTest(fixture=name, domain=domain):
-                    self.assertTrue(domain.rstrip(".").lower().endswith(".example"), f"{domain} is not a reserved .example name")
+                    domain = domain.rstrip(".").lower()
+                    self.assertTrue(domain.endswith(".example") or domain in self.KNOWN_SERVICES,
+                                    f"{domain} is not a reserved .example name")
 
     def test_every_address_is_from_a_documentation_range(self):
         for name, text in self.texts():

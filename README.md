@@ -2,13 +2,13 @@
 
 Reads a saved email (a `.eml` file) and says how likely it is to be phishing, and why.
 
-> **Status: stage 1 of 6.** It reads an email safely and checks who really sent it: the sender-authentication results and the sender's name and addresses. It does not look at links or attachments yet. The risk score is provisional: the thresholds are first guesses and have not been measured against real mail.
+> **Status: stage 2 of 6.** It reads an email safely, checks who really sent it, and checks where its links really go. It does not look at lookalike domains or attachments yet. The risk score is provisional: the thresholds are first guesses and have not been measured against real mail.
 
 Phishing is where most intrusions start, and deciding whether one reported email is real is everyday work for a security analyst. Lurecheck does the first pass: it reads the message the way an analyst would, lists what it found, and shows the evidence for each finding so a person can agree or disagree.
 
 ## Try it
 
-Needs Python 3.9 or newer and nothing else. The repository includes six made-up emails:
+Needs Python 3.9 or newer and nothing else. The repository includes nine made-up emails:
 
 ```bash
 python3 -m lurecheck tests/fixtures/display_name_trick.eml
@@ -35,6 +35,8 @@ Also noted (adds nothing to the score)
 ```
 
 That example is the point of the tool in one message: every authentication check **passed**, because the sender owns the domain it was sent from, and it is still a trick.
+
+For the link checks, try `tests/fixtures/deceptive_link.eml` and `tests/fixtures/link_tricks.eml`.
 
 Options:
 
@@ -72,6 +74,19 @@ Each finding has a fixed id, a severity, the evidence that triggered it, and a p
 | `sender.no-from` | No From header | medium |
 | `sender.international-domain` | The sender's domain uses non-English letters | low |
 | `sender.sent-through-another-domain` | Sent through a mailing service or other third party | info |
+| `link.name-before-at` | A link puts a trusted-looking name before an `@`, which browsers ignore | high |
+| `link.disguised-ip-address` | A link goes to a numeric address written to not look like one | high |
+| `link.runs-code` | A link runs code or carries a page inside itself (`javascript:`, `data:`) | high |
+| `link.text-shows-another-site` | A link's text names one site and its address goes to another | medium |
+| `link.ip-address` | A link goes to a bare numeric address | medium |
+| `link.malformed` | A link is written in a way browsers repair and people misread | medium |
+| `link.bounces-through` | A link bounces off a well-known site on its way elsewhere | low |
+| `link.carries-another-address` | A link's address has a second address inside it | low |
+| `link.shortened` | A link uses a shortening service, hiding where it leads | low |
+| `link.international-domain` | A link goes to a site whose name uses non-English letters | low |
+| `link.rewritten-by-security-service` | Links were rewritten by a mail security service, and read through | info |
+| `link.sites` | The sites the message links to | info |
+| `link.too-many` | More links than the limit; the rest were not read | info |
 
 ### Which results to believe
 
@@ -80,6 +95,16 @@ A mail server records what it found about the sender in an `Authentication-Resul
 Mail servers add their header at the top, so the topmost one was added last, by the server nearest the reader. Lurecheck uses that one and ignores the rest. If you know the name your mail server writes there (`mx.google.com`, for example), pass `--trusted-server` and only results under that name are used. That is safer, because it does not depend on the order of headers.
 
 Lurecheck **reads** these results. It does not redo the checks, which would need DNS lookups, and by default it never touches the network.
+
+### Where the links go
+
+A reader sees a link's text. The browser follows its address. Lurecheck reads every link in the HTML and plain-text parts and works out where each address goes **without visiting it**:
+
+- **The address is read the way a browser reads it.** Browsers drop line breaks, treat a backslash as a slash, and ignore anything before an `@`. A link that relies on one of those reads as one site to a person and goes to another.
+- **Known wrappers are read through.** Mail security products rewrite every link to pass through their scanner (Microsoft Safe Links, Proofpoint URL Defense). Lurecheck decodes those offline and judges the link by its real destination, so a rewritten link is neither excused nor blamed for the rewrite. A link that bounces off a search engine's redirect is read through the same way, and noted.
+- **One finding per trick.** Forty copies of a bad link score the same as one. The evidence shows up to three examples.
+
+What it cannot know offline: where a shortened link leads, and whether an unfamiliar site carrying another address will forward to it. Those are reported as what they are, at low severity.
 
 ### The score
 
@@ -102,14 +127,18 @@ How Lurecheck protects itself:
 - **Nothing in the message can stop the analysis.** Unknown encodings, broken base64 and malformed structure are noted and read around. A file that cannot be read at all is reported as such, which is itself unusual for genuine mail.
 - **The report cannot be hijacked.** Text from the message is made safe before printing: control characters, escape sequences and invisible characters are shown as visible codes such as `\x1b`. A message cannot clear the screen, recolour the output or forge a line of the report.
 - **Headers are read before they are decoded.** A sender's name can be encoded to contain `<`, `>` or a comma. Decoding first would let it change which part is taken as the address.
+- **Its own HTML reader.** Python's built-in HTML parser slows down with the *square* of the input size when the markup is built to make it: 80 KB of unclosed tags took it over a minute when measured for this project, and some inputs crash it. A message body can be megabytes. Lurecheck uses a small scanner that only finds links and takes time proportional to the size: the same megabyte in under a second.
 - **No invisible characters in the source.** The tool that looks for hidden characters must not contain any. A test scans every file.
 
 ## Known limits
 
 - **It trusts the receiving server's results.** If the file was edited after delivery, or the topmost results header was not written by your server, the conclusion is wrong. `--trusted-server` narrows this, and does not close it.
-- **Passing authentication is not innocence.** A phisher's own domain passes every check. The other findings exist for that case, and stage 1 has only a few of them.
+- **Passing authentication is not innocence.** A phisher's own domain passes every check. The other findings exist for that case.
 - **"Same organisation" is approximate.** Whether two domains belong together is decided from their names, with a short built-in list of suffixes anyone can register under (`co.uk`, `github.io`). An uncommon suffix can be misjudged.
-- **No links, attachments or body text yet.** A message whose only trick is a deceptive link scores zero today.
+- **Honest click tracking looks like a deceptive link.** A newsletter that shows its own address as link text and sends the click through a tracking service is flagged the same way as a phish. That is why `link.text-shows-another-site` is medium, not high. Stage 4 will measure how often it happens.
+- **It is not a browser.** Where browsers disagree about broken markup, the link scanner may read it differently from the one your mail program uses. Only `<a>` and `<area>` links are read: not buttons built from forms, images, or scripts.
+- **Lookalike names are not recognised yet.** A link to `northwind-bank-alerts.example` is just a link to a site. That is stage 3.
+- **No attachments or body text yet.**
 - **The scores are unmeasured.** See above.
 
 ## Build stages
@@ -119,7 +148,7 @@ Each stage is usable and tested on its own.
 | Stage | Deliverable | Status |
 |-------|-------------|--------|
 | 1 | Read an email safely; sender and authentication checks; a scored report on the command line | done |
-| 2 | Links: extract them, unwrap known redirect wrappers offline, flag deceptive ones | not started |
+| 2 | Links: extract them, unwrap known redirect wrappers offline, flag deceptive ones | done |
 | 3 | Lookalike domains | not started |
 | 4 | A labelled test set and measured results: what it catches, misses and wrongly flags (**MVP**) | not started |
 | 5 | Attachments and HTML tricks | not started |

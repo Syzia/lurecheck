@@ -1,0 +1,24 @@
+Delivered-To: alex@harbor-mail.example
+Received: by mx.harbor-mail.example with SMTP id s1t2u3 for <alex@harbor-mail.example>;
+        Fri, 16 Oct 2026 08:00:21 +0000
+Return-Path: <bounce-9902@bounces.northwind-bank.example>
+Authentication-Results: mx.harbor-mail.example;
+       dkim=pass header.i=@northwind-bank.example header.s=news2026 header.b=T2ZmZXJz;
+       spf=pass smtp.mailfrom=bounce-9902@bounces.northwind-bank.example;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=northwind-bank.example
+Received: from out25.northwind-bank.example (out25.northwind-bank.example [192.0.2.25])
+        by mx.harbor-mail.example with ESMTPS; Fri, 16 Oct 2026 08:00:20 +0000
+From: Northwind Bank <news@northwind-bank.example>
+To: Alex Rivera <alex@harbor-mail.example>
+Subject: New savings rates from November
+Date: Fri, 16 Oct 2026 08:00:15 +0000
+Message-ID: <20261016080015.9902@northwind-bank.example>
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+
+<html><body>
+<p>Hello Alex, our savings rates change on 1 November.</p>
+<p>Details: <a href="https://nam01.safelinks.protection.outlook.com/?url=https%3A%2F%2Fnorthwind-bank.example%2Foffers%2Fsavings&amp;data=05%7C01%7Calex&amp;reserved=0">northwind-bank.example/offers/savings</a></p>
+<p><a href="https://urldefense.proofpoint.com/v2/url?u=https-3A__www.northwind-2Dbank.example_rates-3Fref-3Dnews&amp;d=DwMFaQ&amp;c=abc">See all rates</a>
+ or <a href="https://www.northwind-bank.example/preferences">change what we send you</a>.</p>
+</body></html>

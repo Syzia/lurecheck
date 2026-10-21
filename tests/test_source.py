@@ -45,9 +45,9 @@ class SourceTests(unittest.TestCase):
         for path in project_files():
             if os.sep + "lurecheck" + os.sep in path and path.endswith(".py"):
                 with open(path, encoding="utf-8") as handle:
-                    in_code |= set(re.findall(r'"((?:auth|sender)\.[a-z-]+)"', handle.read()))
+                    in_code |= set(re.findall(r'"((?:auth|sender|link)\.[a-z-]+)"', handle.read()))
         with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as handle:
-            in_readme = set(re.findall(r"^\| `((?:auth|sender)\.[a-z-]+)` \|", handle.read(), flags=re.MULTILINE))
+            in_readme = set(re.findall(r"^\| `((?:auth|sender|link)\.[a-z-]+)` \|", handle.read(), flags=re.MULTILINE))
         self.assertEqual(in_readme, in_code)
         self.assertGreater(len(in_code), 20)
 
