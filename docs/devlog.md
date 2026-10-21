@@ -4,6 +4,23 @@ Important findings, mistakes and decisions, newest first. The things that were n
 
 ---
 
+## 2026-10-21: Lookalike domains (stage 3)
+
+**Summary.** Lurecheck now compares every domain in a message (the sender's, the reply address's, and each link's destination) with a list of commonly imitated brands and with any domain the user protects, and reports five kinds of imitation. A domain in another alphabet is first reduced to what it looks like, so `p\u0430ypal.com` with a Cyrillic letter compares equal to `paypal.com`.
+
+- **The same trap, a third time.** The tests for lookalike letters contain lookalike letters, and some were written into the files as the letters themselves. This time they were visible (a Cyrillic `\u0430` looks exactly like a Latin `a`), so the stage 1 guard, which looks for invisible characters, could not see them. There is now a second guard: no source file may contain a letter from the lookalike table, except as an escape code. On its first run it also found a Russian word in an older test, and a Cyrillic letter in another.
+- **"Same organisation" is now decided by who registered the name.** Until now two domains counted as related only if one was inside the other. That said `news.bank.example` and `help.bank.example` were different organisations, which is wrong and would have flagged a reply going to a bank's own help desk. Both now reduce to `bank.example`, the part someone bought, and are compared on that. The approximation is the same short list of endings anyone can register under (`co.uk`, `github.io`), not the full Public Suffix List.
+- **"chasm" is not an imitation of "chase".** The first version reported any name one letter away from a brand's. For a five-letter brand, a one-letter change is often just another English word. The rule now applies to names of six letters or more.
+- **One trick, one count.** A domain that imitates a brand with Cyrillic letters also mixes alphabets; reporting both would score the same evidence twice. A brand name typed into the sender's name as an address (`"accounts@bank.example" <x@evil.example>`) is the sender check's finding, so the brand-name check ignores addresses.
+- **The old "non-English letters" findings now score nothing.** They were a stand-in for this check. Plenty of real organisations have international names, and now there is something that can tell an imitation from a name.
+- **The invisible part is spelled out.** A report that says `login.mіcrosoft.example` imitates Microsoft is unconvincing when the Cyrillic letter looks exactly like the Latin one, so the report names it.
+
+**What the deliberate bugs found.** Fifty-eight planted, fifty-one caught on the first run. Six of the seven survivors were missing tests: a protected domain given with a subdomain, a two-letter difference counted as one, the weaker of two imitations being reported, the same place listed twice, every example being shown, and one display name claiming two brands at once. The seventh compares numeric addresses with brand names, which can never match, so it changes nothing that can be observed.
+
+**Not done.** The brand list is a few dozen names and cannot be complete in either direction: a genuine domain it does not know can be reported as an imitation, and an imitation of a brand it does not know goes unnoticed. That is what `--protect` is for. Only the common lookalike alphabets are covered.
+
+---
+
 ## 2026-10-13: Where the links really go (stage 2)
 
 **Summary.** Lurecheck now reads every link in a message and works out where its address goes without visiting it. It reads the address the way a browser does, looks inside the wrappers that mail security products and search engines put around links, and reports the ways a link's text and address are made to differ.

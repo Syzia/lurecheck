@@ -2,13 +2,13 @@
 
 Reads a saved email (a `.eml` file) and says how likely it is to be phishing, and why.
 
-> **Status: stage 2 of 6.** It reads an email safely, checks who really sent it, and checks where its links really go. It does not look at lookalike domains or attachments yet. The risk score is provisional: the thresholds are first guesses and have not been measured against real mail.
+> **Status: stage 3 of 6.** It reads an email safely, checks who really sent it, where its links really go, and whether any domain in it imitates a well-known one. It does not look at attachments yet. The risk score is provisional: the thresholds are first guesses and have not been measured against real mail.
 
 Phishing is where most intrusions start, and deciding whether one reported email is real is everyday work for a security analyst. Lurecheck does the first pass: it reads the message the way an analyst would, lists what it found, and shows the evidence for each finding so a person can agree or disagree.
 
 ## Try it
 
-Needs Python 3.9 or newer and nothing else. The repository includes nine made-up emails:
+Needs Python 3.9 or newer and nothing else. The repository includes ten made-up emails:
 
 ```bash
 python3 -m lurecheck tests/fixtures/display_name_trick.eml
@@ -36,12 +36,17 @@ Also noted (adds nothing to the score)
 
 That example is the point of the tool in one message: every authentication check **passed**, because the sender owns the domain it was sent from, and it is still a trick.
 
-For the link checks, try `tests/fixtures/deceptive_link.eml` and `tests/fixtures/link_tricks.eml`.
+For the link checks, try `tests/fixtures/deceptive_link.eml` and `tests/fixtures/link_tricks.eml`. For lookalike domains, `tests/fixtures/lookalike_microsoft.eml`. The made-up bank in these examples is not on the built-in list of brands, so name it to have its imitations caught too:
+
+```bash
+python3 -m lurecheck --protect northwind-bank.example tests/fixtures/deceptive_link.eml
+```
 
 Options:
 
 - `--json` prints the same report as JSON, for another program to read.
 - `--trusted-server NAME` names your own mail server (see "Which results to believe" below).
+- `--protect DOMAIN` adds a domain to watch for imitations of, usually your own organisation's. Repeat it for several.
 - Several files can be given at once.
 
 **Your own email.** Save a message as `.eml` and pass its path. In Gmail: open the message, choose *Show original*, then *Download Original*. In Apple Mail: *File → Save As…* with the format *Raw Message Source*. Keep saved messages outside this folder, for example in `~/phishing-samples/`: they contain personal data, and `.gitignore` refuses them anyway.
@@ -72,7 +77,7 @@ Each finding has a fixed id, a severity, the evidence that triggered it, and a p
 | `sender.several-from-addresses` | One From header lists several senders | medium |
 | `sender.hidden-characters` | Invisible or direction-changing characters in the sender | medium |
 | `sender.no-from` | No From header | medium |
-| `sender.international-domain` | The sender's domain uses non-English letters | low |
+| `sender.international-domain` | The sender's domain uses non-English letters | info |
 | `sender.sent-through-another-domain` | Sent through a mailing service or other third party | info |
 | `link.name-before-at` | A link puts a trusted-looking name before an `@`, which browsers ignore | high |
 | `link.disguised-ip-address` | A link goes to a numeric address written to not look like one | high |
@@ -83,10 +88,17 @@ Each finding has a fixed id, a severity, the evidence that triggered it, and a p
 | `link.bounces-through` | A link bounces off a well-known site on its way elsewhere | low |
 | `link.carries-another-address` | A link's address has a second address inside it | low |
 | `link.shortened` | A link uses a shortening service, hiding where it leads | low |
-| `link.international-domain` | A link goes to a site whose name uses non-English letters | low |
+| `link.international-domain` | A link goes to a site whose name uses non-English letters | info |
 | `link.rewritten-by-security-service` | Links were rewritten by a mail security service, and read through | info |
 | `link.sites` | The sites the message links to | info |
 | `link.too-many` | More links than the limit; the rest were not read | info |
+| `lookalike.characters` | A domain imitates a well-known one with lookalike letters or digits | high |
+| `lookalike.brand-in-subdomain` | A domain puts a well-known name in front of someone else's | high |
+| `lookalike.one-letter-off` | A domain is one letter away from a well-known one | medium |
+| `lookalike.name-claims-brand` | The sender's name says a brand the sending domain does not belong to | medium |
+| `lookalike.brand-plus-words` | A domain combines a well-known name with other words | medium |
+| `lookalike.mixed-alphabets` | A domain mixes alphabets inside one word | medium |
+| `lookalike.different-ending` | A well-known name under a different ending | low |
 
 ### Which results to believe
 
@@ -105,6 +117,28 @@ A reader sees a link's text. The browser follows its address. Lurecheck reads ev
 - **One finding per trick.** Forty copies of a bad link score the same as one. The evidence shows up to three examples.
 
 What it cannot know offline: where a shortened link leads, and whether an unfamiliar site carrying another address will forward to it. Those are reported as what they are, at low severity.
+
+### Lookalike domains
+
+The sender's domain, the domains replies go to, and every link's destination are compared with a built-in list of commonly imitated brands (banks, mail and cloud providers, couriers, tax offices) and with any domain given to `--protect`. Five kinds of imitation are recognised, strongest first:
+
+| Kind | Example | Why it works |
+|------|---------|--------------|
+| Lookalike characters | `pаypal.com`, with a Cyrillic `а`; `paypa1.com`; `rnicrosoft.com` | To a reader it is the same name |
+| The real name as a subdomain | `paypal.com.account-verify.example` | The owner is the part at the end, which people do not read |
+| One letter off | `paypall.com`, `micorsoft.com` | Catches typing mistakes, and careless readers |
+| The real name plus words | `paypal-support.example` | Looks official and costs nothing |
+| A different ending | `paypal.co` | A different owner, unless the brand bought both |
+
+A name written in another alphabet is reduced to what it **looks like** before comparing, using the confusable-characters idea from Unicode's security guidance: Cyrillic and Greek letters drawn like English ones, accents, and the old ASCII disguises (`rn` for `m`, `1` for `l`, `0` for `o`). The report spells out which letter is foreign, because it is invisible otherwise:
+
+```
+login.xn--mcrosoft-thh.example (reads as login.mіcrosoft.example; і is cyrillic small letter byelorussian-ukrainian i)
+```
+
+Separately, a word that mixes alphabets is reported even if it imitates nothing on the list, and a display name that names a brand ("Microsoft account team") is reported when the sending domain is not one the brand uses.
+
+The two "non-English letters" findings from stages 1 and 2 now add nothing to the score. Many genuine organisations have names like that; whether one is an imitation is this check's question, and it answers it better.
 
 ### The score
 
@@ -137,7 +171,9 @@ How Lurecheck protects itself:
 - **"Same organisation" is approximate.** Whether two domains belong together is decided from their names, with a short built-in list of suffixes anyone can register under (`co.uk`, `github.io`). An uncommon suffix can be misjudged.
 - **Honest click tracking looks like a deceptive link.** A newsletter that shows its own address as link text and sends the click through a tracking service is flagged the same way as a phish. That is why `link.text-shows-another-site` is medium, not high. Stage 4 will measure how often it happens.
 - **It is not a browser.** Where browsers disagree about broken markup, the link scanner may read it differently from the one your mail program uses. Only `<a>` and `<area>` links are read: not buttons built from forms, images, or scripts.
-- **Lookalike names are not recognised yet.** A link to `northwind-bank-alerts.example` is just a link to a site. That is stage 3.
+- **The brand list is short and cannot be complete.** A brand's genuine domain that is missing from it (a regional site, a newly bought name) can be reported as an imitation of that brand; the finding names both, so it is easy to check. A lookalike of a brand that is not on the list, and was not given to `--protect`, is not recognised at all.
+- **The lookalike table covers the usual suspects, not all of Unicode.** Cyrillic, Greek, Armenian and the common Latin variants. A letter from an uncommon alphabet that happens to look English can get through.
+- **A one-letter difference can be a real word.** That rule only applies to names of six letters or more, and is scored medium.
 - **No attachments or body text yet.**
 - **The scores are unmeasured.** See above.
 
@@ -149,7 +185,7 @@ Each stage is usable and tested on its own.
 |-------|-------------|--------|
 | 1 | Read an email safely; sender and authentication checks; a scored report on the command line | done |
 | 2 | Links: extract them, unwrap known redirect wrappers offline, flag deceptive ones | done |
-| 3 | Lookalike domains | not started |
+| 3 | Lookalike domains | done |
 | 4 | A labelled test set and measured results: what it catches, misses and wrongly flags (**MVP**) | not started |
 | 5 | Attachments and HTML tricks | not started |
 | 6 | Optional live checks, such as DNS lookups, behind an explicit flag (stretch) | not started |

@@ -3,12 +3,12 @@ from __future__ import annotations
 
 from typing import Callable, List, Optional, Sequence
 
-from lurecheck.checks import Options, auth, links, sender
+from lurecheck.checks import Options, auth, links, lookalike, sender
 from lurecheck.findings import SEVERITIES, Finding, Report
 from lurecheck.message import Email
 
 Check = Callable[[Email, Options], List[Finding]]
-CHECKS: Sequence[Check] = (sender.check, auth.check, links.check)
+CHECKS: Sequence[Check] = (sender.check, auth.check, links.check, lookalike.check)
 SUMMARY_HEADERS = ("From", "Reply-To", "To", "Subject", "Date")
 
 

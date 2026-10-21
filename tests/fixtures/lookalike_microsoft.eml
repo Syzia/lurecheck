@@ -1,0 +1,24 @@
+Delivered-To: alex@harbor-mail.example
+Received: by mx.harbor-mail.example with SMTP id v4w5x6 for <alex@harbor-mail.example>;
+        Sat, 17 Oct 2026 02:12:51 +0000
+Return-Path: <account-security-noreply@micros0ft-alerts.example>
+Authentication-Results: mx.harbor-mail.example;
+       dkim=pass header.i=@micros0ft-alerts.example header.s=k1 header.b=U2lnbg;
+       spf=pass smtp.mailfrom=account-security-noreply@micros0ft-alerts.example;
+       dmarc=pass (p=NONE sp=NONE dis=NONE) header.from=micros0ft-alerts.example
+Received: from mta.micros0ft-alerts.example (mta.micros0ft-alerts.example [198.51.100.171])
+        by mx.harbor-mail.example with ESMTPS; Sat, 17 Oct 2026 02:12:50 +0000
+From: Microsoft account team <account-security-noreply@micros0ft-alerts.example>
+To: alex@harbor-mail.example
+Subject: Microsoft account unusual sign-in activity
+Date: Sat, 17 Oct 2026 02:12:47 +0000
+Message-ID: <signin-30418@micros0ft-alerts.example>
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+
+<html><body>
+<p>We detected something unusual about a recent sign-in to your Microsoft account.</p>
+<p>Country/region: Unknown<br>IP address: 203.0.113.200</p>
+<p><a href="https://login.xn--mcrosoft-thh.example/review?id=30418">Review recent activity</a></p>
+<p>Thanks,<br>The Microsoft account team</p>
+</body></html>

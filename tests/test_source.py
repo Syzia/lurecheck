@@ -38,6 +38,20 @@ class SourceTests(unittest.TestCase):
                                          f"U+{ord(char):04X} is written literally; use an escape")  # fmt: skip
         self.assertGreater(checked, 15)  # the walk really found the project
 
+    def test_no_source_file_contains_a_letter_disguised_as_an_english_one(self):
+        # A Cyrillic "a" in code reads as "a" and is not one. Tests about lookalikes need such
+        # letters, so they must be written as escapes, where a reviewer can see them.
+        from lurecheck.domains import _LOOKS_LIKE
+
+        for path in project_files():
+            if not path.endswith(".py"):
+                continue
+            with open(path, encoding="utf-8") as handle:
+                for number, line in enumerate(handle, 1):
+                    disguised = [char for char in line if char in _LOOKS_LIKE]
+                    with self.subTest(file=os.path.relpath(path, ROOT), line=number):
+                        self.assertEqual(disguised, [], "write lookalike letters as escapes")
+
     def test_the_readme_lists_exactly_the_findings_the_code_can_report(self):
         import re
 
@@ -45,9 +59,9 @@ class SourceTests(unittest.TestCase):
         for path in project_files():
             if os.sep + "lurecheck" + os.sep in path and path.endswith(".py"):
                 with open(path, encoding="utf-8") as handle:
-                    in_code |= set(re.findall(r'"((?:auth|sender|link)\.[a-z-]+)"', handle.read()))
+                    in_code |= set(re.findall(r'"((?:auth|sender|link|lookalike)\.[a-z-]+)"', handle.read()))
         with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as handle:
-            in_readme = set(re.findall(r"^\| `((?:auth|sender|link)\.[a-z-]+)` \|", handle.read(), flags=re.MULTILINE))
+            in_readme = set(re.findall(r"^\| `((?:auth|sender|link|lookalike)\.[a-z-]+)` \|", handle.read(), flags=re.MULTILINE))
         self.assertEqual(in_readme, in_code)
         self.assertGreater(len(in_code), 20)
 

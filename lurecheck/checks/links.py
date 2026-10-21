@@ -159,9 +159,9 @@ def check(message: Email, options: Options) -> List[Finding]:
         ("link.shortened", "low", 10, "A link uses a shortening service, hiding where it leads",
          "The real destination is only revealed by opening the link, which Lurecheck never does. Shorteners are common "
          "in text messages and social media and unusual in mail from an organisation."),
-        ("link.international-domain", "low", 10, "A link goes to a site whose name uses non-English letters",
-         "Normal for many organisations, and also how lookalike names are made: a letter from another alphabet that "
-         "looks identical to an English one."),
+        ("link.international-domain", "info", 0, "A link goes to a site whose name uses non-English letters",
+         "Normal for many organisations. Whether the name imitates a well-known one is the lookalike check's job, "
+         "which compares how it looks, not which alphabet it uses."),
         ("link.rewritten-by-security-service", "info", 0, "Links were rewritten by a mail security service, and read through",
          "Your mail provider replaced each link with one that passes through its scanner first. Lurecheck looked inside "
          "the rewrite, so the other findings are about where the links really go."),
